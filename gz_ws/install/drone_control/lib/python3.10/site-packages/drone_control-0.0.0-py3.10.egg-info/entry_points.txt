@@ -1,0 +1,2 @@
+[console_scripts]
+coverage_mission = drone_control.covarage:main
