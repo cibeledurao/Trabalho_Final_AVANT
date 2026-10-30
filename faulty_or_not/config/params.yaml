@@ -1,0 +1,16 @@
+mission_node:
+  ros__parameters:
+    order_ascending: true
+    relay_id: 0
+
+navigation_node:
+  ros__parameters:
+    altitude: 6.5
+    fov: 60.0
+    margin: 1.0
+    position_tolerance: 0.2
+
+vision_node:
+  ros__parameters:
+    n_frames_vote: 5
+    circularity_threshold: 0.75
