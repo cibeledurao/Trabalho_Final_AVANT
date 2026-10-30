@@ -19,7 +19,7 @@ setup(
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='Trainee',
-    maintainer_email='trainee@avant.ufmg.br',
+    maintainer_email='fefelipe860@gmail.com',
     description='Trabalho final trainee AVANT',
     license='Apache-2.0',
     tests_require=['pytest'],

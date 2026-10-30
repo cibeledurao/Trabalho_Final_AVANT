@@ -26,10 +26,20 @@ class MissionNode(Node):
         self.figures = {}
         self.mission_completed = False
 
+        self.audio_dir = None
         try:
-            self.audio_dir = os.path.join(get_package_share_directory('faulty_or_not'), 'audios')
+            share_dir = os.path.join(get_package_share_directory('faulty_or_not'), 'audios')
+            if os.path.exists(share_dir):
+                self.audio_dir = share_dir
         except Exception:
-            self.audio_dir = os.path.join(os.path.dirname(__file__), '..', 'audios')
+            pass
+
+        if not self.audio_dir:
+            local_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'audios'))
+            if os.path.exists(local_dir):
+                self.audio_dir = local_dir
+            else:
+                self.audio_dir = 'audios'
 
         self.get_logger().info('Mission node iniciado.')
 
@@ -52,13 +62,27 @@ class MissionNode(Node):
             if len(self.figures) == 3:
                 self.process_mission()
 
+    def color_sort_key(self, hex_code):
+        hex_clean = hex_code.replace('#', '').strip()
+        r = int(hex_clean[0:2], 16)
+        g = int(hex_clean[2:4], 16)
+        b = int(hex_clean[4:6], 16)
+
+        if r > g and r > b:
+            return 1
+        elif g > r and g > b:
+            return 2
+        elif b > r and b > g:
+            return 3
+        return int(hex_clean, 16)
+
     def process_mission(self):
         self.mission_completed = True
         self.get_logger().info('3 figuras detectadas. Iniciando ordenacao e acionamentos.')
 
         sorted_items = sorted(
             self.figures.items(),
-            key=lambda x: int(x[1].replace('#', ''), 16),
+            key=lambda x: self.color_sort_key(x[1]),
             reverse=not self.order_ascending
         )
 
@@ -85,7 +109,7 @@ class MissionNode(Node):
         }
 
         for name, _ in sorted_items:
-            clean_name = name.lower().replace('â', 'a').replace('ã', 'a').replace('í', 'i')
+            clean_name = name.lower().replace('â', 'a').replace('ã', 'a').replace('í', 'i').replace('á', 'a')
             filename = name_map.get(clean_name, f'{clean_name}.wav')
             file_path = os.path.join(self.audio_dir, filename)
 
