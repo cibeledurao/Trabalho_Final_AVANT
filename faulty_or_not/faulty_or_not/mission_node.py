@@ -64,16 +64,17 @@ class MissionNode(Node):
 
     def color_sort_key(self, hex_code):
         hex_clean = hex_code.replace('#', '').strip()
-        r = int(hex_clean[0:2], 16)
-        g = int(hex_clean[2:4], 16)
-        b = int(hex_clean[4:6], 16)
+        # r = int(hex_clean[0:2], 16)
+        # g = int(hex_clean[2:4], 16)
+        # b = int(hex_clean[4:6], 16)
 
-        if r > g and r > b:
-            return 1
-        elif g > r and g > b:
-            return 2
-        elif b > r and b > g:
-            return 3
+        # if r > g and r > b:
+        #     return 1
+        # elif g > r and g > b:
+        #     return 2
+        # elif b > r and b > g:
+        #     return 3
+
         return int(hex_clean, 16)
 
     def process_mission(self):
