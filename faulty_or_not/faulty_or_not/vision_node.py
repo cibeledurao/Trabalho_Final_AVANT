@@ -57,7 +57,7 @@ class VisionNode(Node) :
 
             for contour in contours_color:
                 if cv2.contourArea(contour) > 1000: #So analisa a forma se a mancha de cor for grande o suficiente
-                    shape = self.obter_forma(contour)
+                    shape = self.get_shape(contour)
                     
                     if shape:
                         result = f"{shape}, {hex_code}"
