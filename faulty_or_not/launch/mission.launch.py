@@ -20,7 +20,9 @@ def generate_launch_description():
             executable='navigation_node',
             name='navigation_node',
             output='screen',
-            parameters=[params_file]
+            parameters=[params_file],
+            sigterm_timeout='30',
+            sigkill_timeout='30'
         ),
         Node(
             package='faulty_or_not',
