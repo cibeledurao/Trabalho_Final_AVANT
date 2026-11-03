@@ -9,7 +9,7 @@ from std_msgs.msg import String
 class VisionNode(Node) :
     def __init__(self):
         super().__init__('vision_node')
-        #Declaração de parâmetros
+        #Declaracao de parametros
         self.declare_parameter('n_frames_vote', 5)
         self.n_frames_vote = self.get_parameter('n_frames_vote').value
 
@@ -19,7 +19,7 @@ class VisionNode(Node) :
         self.debug_pub = self.create_publisher(Image, '/vision/debug_image', 10)
         self.image_sub = self.create_subscription(Image, '/camera/image_raw', self.image_callback, 10)
 
-        #Variáveis de memória
+        #Variaveis de memoria
         self.current_detection_count = 0
         self.last_detected_figure = None
         self.published_figures = []
