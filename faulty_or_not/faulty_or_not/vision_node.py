@@ -22,7 +22,7 @@ class VisionNode(Node) :
         #Variaveis de memoria
         self.current_detection_count = 0
         self.last_detected_figure = None
-        self.published_figures = []
+        self.published_figures = set()
 
     def get_shape(self, contour):
         """Conta os vértices para descobrir a forma geométrica"""
