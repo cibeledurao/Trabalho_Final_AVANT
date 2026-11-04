@@ -77,7 +77,7 @@ class VisionNode(Node) :
                     x, y, w, h = cv2.boundingRect(contour)
 
                     # Ignora se encostar nas bordas (figura cortada pela camera)
-                    if x <= 5 or y <= 5 or (x + w) >= (w_img - 5) or (y + h) >= (h_img - 5):
+                    if x <= 2 or y <= 2 or (x + w) >= (w_img - 2) or (y + h) >= (h_img - 2):
                         continue
 
                     shape = self.get_shape(contour)

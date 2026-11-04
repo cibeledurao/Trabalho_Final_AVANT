@@ -5,12 +5,13 @@ mission_node:
 
 navigation_node:
   ros__parameters:
-    altitude: 3.5
+    altitude: 3.8
+    speed: 0.7
     fov: 60.0
     margin: 1.0
     position_tolerance: 0.2
 
 vision_node:
   ros__parameters:
-    n_frames_vote: 5
+    n_frames_vote: 2
     circularity_threshold: 0.90
