@@ -17,9 +17,9 @@ class CoverageMission(Node):
         super().__init__('coverage_mission_5')
         self.get_logger().info('Esperando conexão com MAVROS...')
 
-
         self.x = self.y = self.z = 0.0
         self.mission_done = False
+        self.emergency_requested = False
 
         # Clientes para os serviços MAVROS
         self.set_mode_client = self.create_client(SetMode, '/mavros/set_mode')
@@ -29,23 +29,31 @@ class CoverageMission(Node):
         self.create_subscription(PoseStamped, '/mavros/local_position/pose', self.pose_cb, qos_profile_sensor_data)
         self.param_client = self.create_client(ParamSetV2, '/mavros/param/set')
 
-        #Executa o tópico do mission_node
+        # Executa o tópico do mission_node
         self.create_subscription(Bool, '/mission/done', self.mission_done_cb, 10)
 
-        #Publisher da posição 
+        # Topico de pouso de emergencia (Extra)
+        self.create_subscription(Bool, '/emergency_land', self.emergency_land_cb, 10)
+
+        # Publisher da posição 
         self.local_position = self.create_publisher(PoseStamped, '/mavros/setpoint_position/local', 10)
 
-        # Aguarda convexão MAVROS
-        # Qualquer service pode ser usado para testar a conexão, não necessariamente o arming
+        # Aguarda conexão MAVROS
         while rclpy.ok() and not self.arming_client.wait_for_service(timeout_sec=1.0):
             self.get_logger().warn('Aguardando serviços do MAVROS...')
 
         # Roda o movimento
         self.get_logger().info('Conexão estabelecida. Iniciando missão.')
         self.run_mission()
-    def mission_done_cb(self,msg):
+
+    def mission_done_cb(self, msg):
         if msg.data:
             self.mission_done = True
+
+    def emergency_land_cb(self, msg):
+        if msg.data:
+            self.get_logger().warn('Comando de pouso de emergencia recebido via topico!')
+            self.emergency_requested = True
 
     def set_speed(self, speed_mps):
         req = ParamSetV2.Request()
@@ -118,22 +126,22 @@ class CoverageMission(Node):
         self.y = msg.pose.position.y
         self.z = msg.pose.position.z
 
-    def send_position(self, x,y,z, duration_sec=5.0):
-            pose = PoseStamped()
-            pose.header.frame_id = 'map'
-            pose.pose.orientation.w = 1.0
-            pose.pose.position.x = float(x)
-            pose.pose.position.y = float(y)
-            pose.pose.position.z = float(z)
+    def send_position(self, x, y, z, duration_sec=5.0):
+        pose = PoseStamped()
+        pose.header.frame_id = 'map'
+        pose.pose.orientation.w = 1.0
+        pose.pose.position.x = float(x)
+        pose.pose.position.y = float(y)
+        pose.pose.position.z = float(z)
 
-            start = time.time()
-            while rclpy.ok() and time.time() - start < duration_sec:
-                if self.mission_done:
-                    break
-                pose.header.stamp = self.get_clock().now().to_msg()
-                self.local_position.publish(pose)
-                rclpy.spin_once(self, timeout_sec=0.05)
-            return False
+        start = time.time()
+        while rclpy.ok() and time.time() - start < duration_sec:
+            if self.mission_done or self.emergency_requested:
+                break
+            pose.header.stamp = self.get_clock().now().to_msg()
+            self.local_position.publish(pose)
+            rclpy.spin_once(self, timeout_sec=0.05)
+        return False
     
     def land(self):
         self.get_logger().warn('Comando pouso.')
@@ -197,13 +205,22 @@ class CoverageMission(Node):
             ]
 
             for i, p in enumerate(points):
+                if self.emergency_requested:
+                    self.get_logger().warn('Pouso de emergencia acionado durante a varredura!')
+                    self.emergency_land()
+                    return
+
                 if self.mission_done:
                     self.get_logger().info('Todas as figuras detectadas. Interrompendo varredura...')
                     break
 
                 self.get_logger().info(f'Coordenada {i+1}: {p}')
                 dist = ((p[0]-self.x)**2 + (p[1]-self.y)**2) ** 0.5
-                self.send_position(p[0], p[1], p[2], duration_sec=dist/MAX_SPEED + 5.5) #diminuir se der
+                self.send_position(p[0], p[1], p[2], duration_sec=dist/MAX_SPEED + 5.5)
+
+            if self.emergency_requested:
+                self.emergency_land()
+                return
 
             self.get_logger().info('A retornar à origem (0, 0)...')
             dist_home = math.hypot(self.x, self.y)

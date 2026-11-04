@@ -11,7 +11,10 @@ class VisionNode(Node) :
         super().__init__('vision_node')
         #Declaracao de parametros
         self.declare_parameter('n_frames_vote', 5)
+        self.declare_parameter('circularity_threshold', 0.85)
+
         self.n_frames_vote = self.get_parameter('n_frames_vote').value
+        self.circularity_threshold = self.get_parameter('circularity_threshold').value
 
         self.bridge = CvBridge()
 
@@ -25,24 +28,33 @@ class VisionNode(Node) :
         self.published_figures = set()
 
     def get_shape(self, contour):
-        """Conta os vértices para descobrir a forma geométrica"""
-        #Aproxima o contorno para um polígono
+        """Descobre a forma usando contagem de vertices e circularidade"""
         perimeter = cv2.arcLength(contour, True)
-        approx = cv2.approxPolyDP(contour, 0.04 * perimeter, True) #Simplifica o contorno para linhas retas, ignorando ruidos da imagem
+        if perimeter == 0:
+            return None
+
+        area = cv2.contourArea(contour)
+        circularity = 4 * np.pi * area / (perimeter * perimeter)
+
+        approx = cv2.approxPolyDP(contour, 0.035 * perimeter, True)
         vertices = len(approx)
 
         if vertices == 3:
             return "Triangulo"
-        elif vertices == 6:
+        elif circularity >= self.circularity_threshold:
+            return "Circulo"
+        elif vertices == 6 or (5 <= vertices <= 7 and circularity < self.circularity_threshold):
             return "Hexagono"
-        elif vertices > 6: #Um circulo aproximado tera muitos vertices
+        elif vertices > 6:
             return "Circulo"
         return None
 
     def image_callback(self, msg):
         cv_image = self.bridge.imgmsg_to_cv2(msg, "bgr8")
         hsv_image = cv2.cvtColor(cv_image, cv2.COLOR_BGR2HSV)
-        debug_image = cv_image.copy() #Cria uma copia da imagem original para desenhar as anotacoes sem estragar a imagem real
+        debug_image = cv_image.copy()
+
+        h_img, w_img = cv_image.shape[:2]
 
         #Dicionario com as faixas de cor e os respetivos codigos HEX
         expected_colors = {
@@ -56,14 +68,19 @@ class VisionNode(Node) :
             contours_color, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             for contour in contours_color:
-                if cv2.contourArea(contour) > 1000: #So analisa a forma se a mancha de cor for grande o suficiente
+                if cv2.contourArea(contour) > 1000:
+                    x, y, w, h = cv2.boundingRect(contour)
+
+                    # Ignora se encostar nas bordas (figura cortada pela camera)
+                    if x <= 5 or y <= 5 or (x + w) >= (w_img - 5) or (y + h) >= (h_img - 5):
+                        continue
+
                     shape = self.get_shape(contour)
                     
                     if shape:
                         result = f"{shape}, {hex_code}"
                         
                         #Desenha na imagem de depuracao
-                        x, y, w, h = cv2.boundingRect(contour)
                         cv2.rectangle(debug_image, (x, y), (x+w, y+h), (0, 255, 255), 2)
                         cv2.putText(debug_image, result, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 255), 2)
 
@@ -77,12 +94,12 @@ class VisionNode(Node) :
 
                             #Publica se atingiu o numero de frames exigido
                             if self.current_detection_count >= self.n_frames_vote:
-                                        msg_pub = String()
-                                        msg_pub.data = result
-                                        self.figure_pub.publish(msg_pub)
-                                        self.published_figures.add(result)
-                                        self.get_logger().info(f"Figura publicada: {result}")
-                                        self.current_detection_count = 0 #Reseta o contador
+                                msg_pub = String()
+                                msg_pub.data = result
+                                self.figure_pub.publish(msg_pub)
+                                self.published_figures.add(result)
+                                self.get_logger().info(f"Figura publicada: {result}")
+                                self.current_detection_count = 0
 
         #Publica a imagem anotada para o relatorio
         self.debug_pub.publish(self.bridge.cv2_to_imgmsg(debug_image, "bgr8"))
