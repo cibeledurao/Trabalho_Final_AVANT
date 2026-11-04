@@ -21,10 +21,12 @@ class CoverageMission(Node):
         self.mission_done = False
         self.emergency_requested = False
 
-        self.declare_parameter('altitude', 3.5)
+        self.declare_parameter('altitude', 3.8)
         self.declare_parameter('speed', MAX_SPEED)
+        self.declare_parameter('spacing', 1.75)
         self.altitude = float(self.get_parameter('altitude').value)
         self.speed = float(self.get_parameter('speed').value)
+        self.spacing = float(self.get_parameter('spacing').value)
 
         # Clientes para os serviços MAVROS
         self.set_mode_client = self.create_client(SetMode, '/mavros/set_mode')
@@ -194,20 +196,16 @@ class CoverageMission(Node):
                 rclpy.spin_once(self, timeout_sec=0.1)
             self.get_logger().info(f'Altitude atingida: z={self.z:.2f}')
 
-            points = [
-                (-7.0,  3.0, self.altitude),  
-                (-7.0, -3.0, self.altitude),  
-                (-4.2, -3.0, self.altitude),
-                (-4.2,  3.0, self.altitude),
-                (-1.4,  3.0, self.altitude),
-                (-1.4, -3.0, self.altitude),
-                ( 1.4, -3.0, self.altitude),
-                ( 1.4,  3.0, self.altitude),
-                ( 4.2,  3.0, self.altitude),
-                ( 4.2, -3.0, self.altitude),
-                ( 7.0, -3.0, self.altitude),  
-                ( 7.0,  3.0, self.altitude)   
-            ]
+            x_min, x_max = -7.0, 7.0
+            y_lim = 3.0
+            n_faixas = int(round((x_max - x_min) / self.spacing)) + 1
+            points = []
+            for idx in range(n_faixas):
+                x_coord = round(x_min + idx * self.spacing, 2)
+                if idx % 2 == 0:
+                    points.extend([(x_coord, y_lim, self.altitude), (x_coord, -y_lim, self.altitude)])
+                else:
+                    points.extend([(x_coord, -y_lim, self.altitude), (x_coord, y_lim, self.altitude)])
 
             for i, p in enumerate(points):
                 if self.emergency_requested:
