@@ -93,6 +93,8 @@ class MissionNode(Node):
         self.get_logger().info('Missao finalizada com sucesso. /mission/done publicado.')
 
     def play_audios(self, sorted_items):
+        import wave
+        import time
         name_map = {
             'triangulo': 'triangulo.wav',
             'circulo': 'circulo.wav',
@@ -106,12 +108,22 @@ class MissionNode(Node):
 
             if os.path.exists(file_path):
                 self.get_logger().info(f'Tocando {filename}...')
+                duration = 2.0
+                try:
+                    with wave.open(file_path, 'rb') as w:
+                        duration = w.getnframes() / float(w.getframerate())
+                except Exception:
+                    pass
+
                 if shutil.which('paplay'):
                     subprocess.run(['paplay', file_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 elif shutil.which('aplay'):
                     subprocess.run(['aplay', file_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 else:
                     subprocess.run(f"ffmpeg -loglevel quiet -i '{file_path}' -f wav - | paplay", shell=True)
+
+                # Aguarda o audio terminar de tocar para nao sobrepor com o proximo
+                time.sleep(duration + 0.3)
             else:
                 self.get_logger().warn(f'Arquivo de audio nao encontrado: {file_path}')
 
