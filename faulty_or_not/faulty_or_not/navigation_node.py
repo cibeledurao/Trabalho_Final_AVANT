@@ -133,7 +133,7 @@ class CoverageMission(Node):
         self.y = msg.pose.position.y
         self.z = msg.pose.position.z
 
-    def send_position(self, x, y, z, duration_sec=5.0):
+    def send_position(self, x, y, z, duration_sec=5.0, ignore_done=False):
         pose = PoseStamped()
         pose.header.frame_id = 'map'
         pose.pose.orientation.w = 1.0
@@ -143,7 +143,7 @@ class CoverageMission(Node):
 
         start = time.time()
         while rclpy.ok() and time.time() - start < duration_sec:
-            if self.mission_done or self.emergency_requested:
+            if (self.mission_done and not ignore_done) or self.emergency_requested:
                 break
             pose.header.stamp = self.get_clock().now().to_msg()
             self.local_position.publish(pose)
@@ -167,7 +167,7 @@ class CoverageMission(Node):
     def emergency_land(self):
         self.get_logger().info("Interrupção detectada. Iniciando pouso de emergência...")
         dist = math.hypot(self.x, self.y)
-        self.send_position(0.0, 0.0, self.z, duration_sec=dist / MAX_SPEED + 1.0)
+        self.send_position(0.0, 0.0, self.z, duration_sec=dist / MAX_SPEED + 1.0, ignore_done=True)
         self.land()
 
     def run_mission(self):
@@ -227,7 +227,7 @@ class CoverageMission(Node):
 
             self.get_logger().info('A retornar à origem (0, 0)...')
             dist_home = math.hypot(self.x, self.y)
-            self.send_position(0.0, 0.0, self.altitude, duration_sec=(dist_home/self.speed) + 5.0)
+            self.send_position(0.0, 0.0, self.altitude, duration_sec=(dist_home / self.speed) + 5.0, ignore_done=True)
 
             self.get_logger().info('Varredura concluída. Pousando...')
             self.land()
