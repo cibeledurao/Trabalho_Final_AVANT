@@ -28,24 +28,29 @@ class VisionNode(Node) :
         self.published_figures = set()
 
     def get_shape(self, contour):
-        """Descobre a forma usando contagem de vertices e circularidade"""
+        """Descobre a forma usando contagem de vertices e razao de circulo circunscrito"""
         perimeter = cv2.arcLength(contour, True)
         if perimeter == 0:
             return None
 
         area = cv2.contourArea(contour)
-        circularity = 4 * np.pi * area / (perimeter * perimeter)
+        if area < 500:
+            return None
 
-        approx = cv2.approxPolyDP(contour, 0.035 * perimeter, True)
+        (x, y), radius = cv2.minEnclosingCircle(contour)
+        circle_area = np.pi * (radius ** 2)
+        if circle_area == 0:
+            return None
+        enc_ratio = area / circle_area
+
+        approx = cv2.approxPolyDP(contour, 0.03 * perimeter, True)
         vertices = len(approx)
 
         if vertices == 3:
             return "Triangulo"
-        elif circularity >= self.circularity_threshold:
-            return "Circulo"
-        elif vertices == 6 or (5 <= vertices <= 7 and circularity < self.circularity_threshold):
+        elif vertices == 6 or (5 <= vertices <= 7 and enc_ratio < 0.90):
             return "Hexagono"
-        elif vertices > 6:
+        elif vertices >= 8 or enc_ratio >= 0.90:
             return "Circulo"
         return None
 
