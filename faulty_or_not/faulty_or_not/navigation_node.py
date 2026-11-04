@@ -21,6 +21,11 @@ class CoverageMission(Node):
         self.mission_done = False
         self.emergency_requested = False
 
+        self.declare_parameter('altitude', 3.5)
+        self.declare_parameter('speed', MAX_SPEED)
+        self.altitude = float(self.get_parameter('altitude').value)
+        self.speed = float(self.get_parameter('speed').value)
+
         # Clientes para os serviços MAVROS
         self.set_mode_client = self.create_client(SetMode, '/mavros/set_mode')
         self.arming_client = self.create_client(CommandBool, '/mavros/cmd/arming')
@@ -178,30 +183,30 @@ class CoverageMission(Node):
 
             time.sleep(0.5)
 
-            if not self.takeoff(6.5):
+            if not self.takeoff(self.altitude):
                 return
 
-            self.set_speed(MAX_SPEED) 
+            self.set_speed(self.speed) 
 
-            self.get_logger().info('Subindo para a altura de varredura (6.5m).')
+            self.get_logger().info(f'Subindo para a altura de varredura ({self.altitude}m).')
             start = time.time()
-            while rclpy.ok() and self.z < 5.85 and time.time() - start < 15.0:
+            while rclpy.ok() and self.z < (self.altitude * 0.9) and time.time() - start < 15.0:
                 rclpy.spin_once(self, timeout_sec=0.1)
             self.get_logger().info(f'Altitude atingida: z={self.z:.2f}')
 
             points = [
-                (-7.0,  3.0, 6.5),  
-                (-7.0, -3.0, 6.5),  
-                (-4.2, -3.0, 6.5),
-                (-4.2,  3.0, 6.5),
-                (-1.4,  3.0, 6.5),
-                (-1.4, -3.0, 6.5),
-                ( 1.4, -3.0, 6.5),
-                ( 1.4,  3.0, 6.5),
-                ( 4.2,  3.0, 6.5),
-                ( 4.2, -3.0, 6.5),
-                ( 7.0, -3.0, 6.5),  
-                ( 7.0,  3.0, 6.5)   
+                (-7.0,  3.0, self.altitude),  
+                (-7.0, -3.0, self.altitude),  
+                (-4.2, -3.0, self.altitude),
+                (-4.2,  3.0, self.altitude),
+                (-1.4,  3.0, self.altitude),
+                (-1.4, -3.0, self.altitude),
+                ( 1.4, -3.0, self.altitude),
+                ( 1.4,  3.0, self.altitude),
+                ( 4.2,  3.0, self.altitude),
+                ( 4.2, -3.0, self.altitude),
+                ( 7.0, -3.0, self.altitude),  
+                ( 7.0,  3.0, self.altitude)   
             ]
 
             for i, p in enumerate(points):
@@ -216,7 +221,7 @@ class CoverageMission(Node):
 
                 self.get_logger().info(f'Coordenada {i+1}: {p}')
                 dist = ((p[0]-self.x)**2 + (p[1]-self.y)**2) ** 0.5
-                self.send_position(p[0], p[1], p[2], duration_sec=dist/MAX_SPEED + 5.5)
+                self.send_position(p[0], p[1], p[2], duration_sec=dist/self.speed + 5.5)
 
             if self.emergency_requested:
                 self.emergency_land()
@@ -224,7 +229,7 @@ class CoverageMission(Node):
 
             self.get_logger().info('A retornar à origem (0, 0)...')
             dist_home = math.hypot(self.x, self.y)
-            self.send_position(0.0, 0.0, 6.5, duration_sec=(dist_home/MAX_SPEED) + 5.0)
+            self.send_position(0.0, 0.0, self.altitude, duration_sec=(dist_home/self.speed) + 5.0)
 
             self.get_logger().info('Varredura concluída. Pousando...')
             self.land()

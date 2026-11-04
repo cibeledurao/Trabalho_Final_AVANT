@@ -5,7 +5,7 @@ mission_node:
 
 navigation_node:
   ros__parameters:
-    altitude: 6.5
+    altitude: 3.5
     fov: 60.0
     margin: 1.0
     position_tolerance: 0.2
