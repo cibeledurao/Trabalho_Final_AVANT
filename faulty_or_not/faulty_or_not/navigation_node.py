@@ -167,7 +167,7 @@ class CoverageMission(Node):
     def emergency_land(self):
         self.get_logger().info("Interrupção detectada. Iniciando pouso de emergência...")
         dist = math.hypot(self.x, self.y)
-        self.send_position(0.0, 0.0, self.z, duration_sec=dist / MAX_SPEED + 1.0, ignore_done=True)
+        self.send_position(0.0, 0.0, self.z, duration_sec=dist / MAX_SPEED + 3.0, ignore_done=True)
         self.land()
 
     def run_mission(self):
