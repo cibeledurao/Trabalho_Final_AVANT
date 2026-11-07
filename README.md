@@ -22,15 +22,18 @@ As bibliotecas externas utilizadas foram:
 * cv2
 * numpy
 * wave (nativo do Python)
+
 ## Instalação e Configuração do Workspace
-Dentro do workspace ROS 2 (onde fica a pasta `src`):
-``` bash
-Felipe me ajuda aqui!! Não dei git clone no meu pq n sei como q faz
-Coloca oq tem q fazer aqui pfvvv
-```
-## Compilação
-Dentro do seu workspace:
+Navegue até a pasta `src` do seu workspace ROS 2 (ex: `~/simulation/starts/avant_ws/src`) e faça o clone do repositório:
 ```bash
+cd ~/simulation/starts/avant_ws/src
+git clone https://github.com/cibeledurao/Trabalho_Final_AVANT.git
+```
+
+## Compilação
+Retorne à raiz do workspace e faça a compilação do pacote:
+```bash
+cd ~/simulation/starts/avant_ws
 colcon build --packages-select faulty_or_not
 source install/setup.bash
 ```
@@ -44,20 +47,24 @@ Para rodar a imagem da câmera:
 ```bash
 ros2 run rqt_image_view rqt_image_view
 ```
+
 ## Execução do navigation_node
-``` bash
+```bash
 ros2 run faulty_or_not navigation_node
 ```
-## Execução do vison_node
-``` bash
+
+## Execução do vision_node
+```bash
 ros2 run faulty_or_not vision_node
 ```
-## Execução do mision_node
-``` bash
+
+## Execução do mission_node
+```bash
 ros2 run faulty_or_not mission_node
-````
+```
+
 ## Teste manual do mission_node
-Com o no de missao rodando, envie os topicos pelo terminal:
+Com o nó de missão rodando, envie os tópicos pelo terminal:
 
 ```bash
 ros2 topic pub /detected_figure std_msgs/msg/String "{data: 'Triangulo,#FF0000'}" --once
