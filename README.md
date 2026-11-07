@@ -29,12 +29,13 @@ Felipe me ajuda aqui!! Não dei git clone no meu pq n sei como q faz
 Coloca oq tem q fazer aqui pfvvv
 ```
 ## Compilação
+Dentro do seu workspace:
 ```bash
 colcon build --packages-select faulty_or_not
 source install/setup.bash
 ```
 
-## Execução
+## Execução geral
 Para rodar todos os nós ao mesmo tempo (navigation, vision e mission):
 ```bash
 ros2 launch faulty_or_not mission.launch.py
