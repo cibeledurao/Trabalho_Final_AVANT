@@ -22,11 +22,13 @@ As bibliotecas externas utilizadas foram:
 * cv2
 * numpy
 * wave (nativo do Python)
-  
-## Compilação
-
+## Instalação e Configuração do Workspace
 Dentro do workspace ROS 2 (onde fica a pasta `src`):
-
+``` bash
+Felipe me ajuda aqui!! Não dei git clone no meu pq n sei como q faz
+Coloca oq tem q fazer aqui pfvvv
+```
+## Compilação
 ```bash
 colcon build --packages-select faulty_or_not
 source install/setup.bash
